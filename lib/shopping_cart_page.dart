@@ -1,23 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'validasi_transaksi_page.dart';
-
-/// Model item pesanan di dalam keranjang
-class CartOrderItem {
-  final String name;
-  final String portion;
-  final int price;
-  final int quantity;
-  final String imageUrl;
-
-  const CartOrderItem({
-    required this.name,
-    required this.portion,
-    required this.price,
-    required this.quantity,
-    required this.imageUrl,
-  });
-}
+import 'pilih_pembayaran_page.dart';
+import 'home_page.dart';
+import 'warung_list_page.dart';
+import 'notifikasi_page.dart';
+import 'akun_page.dart';
+import 'cart_manager.dart';
 
 class ShoppingCartPage extends StatefulWidget {
   const ShoppingCartPage({super.key});
@@ -37,43 +25,19 @@ class _ShoppingCartPageState extends State<ShoppingCartPage> {
   static const Color _bannerBgColor = Color(0xFFF5EFE3);
 
   // Metode pembayaran terpilih
-  String _selectedPaymentMethod = 'QRIS';
+  final String _selectedPaymentMethod = 'QRIS';
 
-  // Biaya ongkos kirim
-  final int _deliveryFee = 8000;
+  // Biaya ongkos kirim (Rp8.000 jika ada pesanan, Rp0 jika kosong)
+  int get _deliveryFee => _orderItems.isEmpty ? 0 : 8000;
 
-  // Daftar item pesanan dari warung Sego Liwet Bakar Kemangi
-  final List<CartOrderItem> _orderItems = const [
-    CartOrderItem(
-      name: 'Sego Liwet Bakar Ayam',
-      portion: 'Porsi · daun pisang',
-      price: 15000,
-      quantity: 1,
-      imageUrl:
-          'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&w=400&q=80',
-    ),
-    CartOrderItem(
-      name: 'Sego Liwet Bakar Tuna',
-      portion: 'Porsi · daun pisang',
-      price: 15000,
-      quantity: 1,
-      imageUrl:
-          'https://images.unsplash.com/photo-1562967914-608f82629710?auto=format&fit=crop&w=400&q=80',
-    ),
-  ];
+  // Daftar item pesanan dari CartManager (awalnya kosong sebelum pengguna memesan)
+  List<CartItem> get _orderItems => CartManager.instance.items;
 
   // Hitung subtotal seluruh menu
-  int get _subtotal {
-    return _orderItems.fold(
-      0,
-      (sum, item) => sum + (item.price * item.quantity),
-    );
-  }
+  int get _subtotal => CartManager.instance.subtotal;
 
   // Hitung total bayar (Subtotal + Ongkos Kirim)
-  int get _totalPayment {
-    return _subtotal + _deliveryFee;
-  }
+  int get _totalPayment => _orderItems.isEmpty ? 0 : _subtotal + _deliveryFee;
 
   // Format mata uang Rupiah (contoh: Rp30.000 / Rp8.000 / Rp38.000)
   String _formatCurrency(int amount) {
@@ -139,19 +103,43 @@ class _ShoppingCartPageState extends State<ShoppingCartPage> {
                         _buildTopCircleButton(
                           icon: Icons.notifications_active_outlined,
                           iconColor: const Color(0xFFD97706),
-                          onTap: () {},
+                          // Navigasi ke Halaman Notifikasi
+                          onTap: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => const NotifikasiPage(),
+                              ),
+                            );
+                          },
                         ),
                         const SizedBox(width: 8),
                         _buildTopCircleButton(
                           icon: Icons.shopping_basket_outlined,
                           iconColor: const Color(0xFF78716C),
-                          onTap: () {},
+                          // Sudah di halaman Keranjang
+                          onTap: () {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(
+                                content: Text('Anda sedang berada di halaman keranjang.'),
+                                duration: Duration(seconds: 1),
+                              ),
+                            );
+                          },
                         ),
                         const SizedBox(width: 8),
                         _buildTopCircleButton(
                           icon: Icons.person_outline_rounded,
                           iconColor: const Color(0xFF2563EB),
-                          onTap: () {},
+                          // Navigasi ke Halaman Akun / Profil
+                          onTap: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => const AkunPage(),
+                              ),
+                            );
+                          },
                         ),
                       ],
                     ),
@@ -212,208 +200,351 @@ class _ShoppingCartPageState extends State<ShoppingCartPage> {
 
                 const SizedBox(height: 14),
 
-                // ==========================================
-                // 3. BANNER INFORMASI ESTIMASI MASAK & TIBA
-                // ==========================================
-                Container(
-                  width: double.infinity,
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-                  decoration: BoxDecoration(
-                    color: _bannerBgColor,
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: Row(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      const Padding(
-                        padding: EdgeInsets.only(top: 2),
-                        child: Icon(
-                          Icons.search_rounded,
-                          color: _textColorDark,
-                          size: 16,
+                if (_orderItems.isEmpty) ...[
+                  // ==========================================
+                  // TAMPILAN KERANJANG KOSONG
+                  // ==========================================
+                  Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.symmetric(
+                        vertical: 36, horizontal: 20),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(16),
+                      border: Border.all(color: _borderColor),
+                    ),
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Container(
+                          width: 76,
+                          height: 76,
+                          decoration: const BoxDecoration(
+                            color: Color(0xFFF5EFE3),
+                            shape: BoxShape.circle,
+                          ),
+                          child: const Icon(
+                            Icons.shopping_basket_outlined,
+                            size: 38,
+                            color: _primaryGreen,
+                          ),
                         ),
-                      ),
-                      const SizedBox(width: 8),
-                      Expanded(
-                        child: RichText(
-                          text: TextSpan(
-                            text:
-                                'Dimasak fresh begitu diterima warung — estimasi tiba ',
+                        const SizedBox(height: 16),
+                        Text(
+                          'Keranjang Belanja Masih Kosong',
+                          style: GoogleFonts.playfairDisplay(
+                            color: _textColorDark,
+                            fontSize: 17.5,
+                            fontWeight: FontWeight.bold,
+                          ),
+                          textAlign: TextAlign.center,
+                        ),
+                        const SizedBox(height: 6),
+                        Text(
+                          'Kamu belum menambahkan menu kuliner apapun.\nYuk, pesan makanan favoritmu sekarang!',
+                          style: GoogleFonts.plusJakartaSans(
+                            color: _textColorMuted,
+                            fontSize: 12,
+                            height: 1.45,
+                          ),
+                          textAlign: TextAlign.center,
+                        ),
+                        const SizedBox(height: 20),
+                        ElevatedButton.icon(
+                          onPressed: () {
+                            Navigator.pushReplacement(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => const WarungListPage(),
+                              ),
+                            );
+                          },
+                          icon: const Icon(
+                            Icons.storefront_rounded,
+                            size: 18,
+                            color: Colors.white,
+                          ),
+                          label: Text(
+                            'Jelajahi Warung Kuliner',
                             style: GoogleFonts.plusJakartaSans(
-                              color: _textColorDark,
-                              fontSize: 11.5,
-                              height: 1.35,
+                              color: Colors.white,
+                              fontSize: 13,
+                              fontWeight: FontWeight.bold,
                             ),
+                          ),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: _primaryGreen,
+                            elevation: 0,
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 20, vertical: 12),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(10),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                ] else ...[
+                  // ==========================================
+                  // 3. BANNER INFORMASI ESTIMASI MASAK & TIBA
+                  // ==========================================
+                  Container(
+                    width: double.infinity,
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                    decoration: BoxDecoration(
+                      color: _bannerBgColor,
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Padding(
+                          padding: EdgeInsets.only(top: 2),
+                          child: Icon(
+                            Icons.search_rounded,
+                            color: _textColorDark,
+                            size: 16,
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: RichText(
+                            text: TextSpan(
+                              text:
+                                  'Dimasak fresh begitu diterima warung — estimasi tiba ',
+                              style: GoogleFonts.plusJakartaSans(
+                                color: _textColorDark,
+                                fontSize: 11.5,
+                                height: 1.35,
+                              ),
+                              children: [
+                                TextSpan(
+                                  text: '25–35 menit.',
+                                  style: GoogleFonts.plusJakartaSans(
+                                    fontWeight: FontWeight.bold,
+                                    color: _textColorDark,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+
+                  const SizedBox(height: 16),
+
+                  // ==========================================
+                  // 4. DAFTAR PESANAN PER WARUNG
+                  // ==========================================
+                  Container(
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(14),
+                      border: Border.all(color: _borderColor),
+                    ),
+                    child: Column(
+                      children: [
+                        // Header Warung & Subtotal
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 14,
+                            vertical: 12,
+                          ),
+                          decoration: const BoxDecoration(
+                            color: _bannerBgColor,
+                            borderRadius: BorderRadius.only(
+                              topLeft: Radius.circular(13),
+                              topRight: Radius.circular(13),
+                            ),
+                            border: Border(
+                              bottom: BorderSide(color: _borderColor),
+                            ),
+                          ),
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             children: [
-                              TextSpan(
-                                text: '25–35 menit.',
+                              Text(
+                                _orderItems.isNotEmpty
+                                    ? _orderItems.first.warungName
+                                    : 'Warung Kuliner',
                                 style: GoogleFonts.plusJakartaSans(
-                                  fontWeight: FontWeight.bold,
                                   color: _textColorDark,
+                                  fontSize: 13.5,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                              Text(
+                                _formatCurrency(_subtotal),
+                                style: GoogleFonts.plusJakartaSans(
+                                  color: _textColorDark,
+                                  fontSize: 13.5,
+                                  fontWeight: FontWeight.bold,
                                 ),
                               ),
                             ],
                           ),
                         ),
-                      ),
-                    ],
-                  ),
-                ),
 
-                const SizedBox(height: 16),
-
-                // ==========================================
-                // 4. DAFTAR PESANAN PER WARUNG
-                // ==========================================
-                Container(
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(14),
-                    border: Border.all(color: _borderColor),
-                  ),
-                  child: Column(
-                    children: [
-                      // Header Warung: Sego Liwet Bakar Kemangi | Rp30.000
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 14,
-                          vertical: 12,
-                        ),
-                        decoration: const BoxDecoration(
-                          color: _bannerBgColor,
-                          borderRadius: BorderRadius.only(
-                            topLeft: Radius.circular(13),
-                            topRight: Radius.circular(13),
+                        // Daftar Item Pesanan dalam Warung
+                        ListView.separated(
+                          shrinkWrap: true,
+                          physics: const NeverScrollableScrollPhysics(),
+                          itemCount: _orderItems.length,
+                          separatorBuilder: (context, index) => const Divider(
+                            color: _borderColor,
+                            height: 1,
+                            thickness: 1,
                           ),
-                          border: Border(
-                            bottom: BorderSide(color: _borderColor),
-                          ),
-                        ),
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            Text(
-                              'Sego Liwet Bakar Kemangi',
-                              style: GoogleFonts.plusJakartaSans(
-                                color: _textColorDark,
-                                fontSize: 13.5,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                            Text(
-                              _formatCurrency(_subtotal),
-                              style: GoogleFonts.plusJakartaSans(
-                                color: _textColorDark,
-                                fontSize: 13.5,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
+                          itemBuilder: (context, index) {
+                            final item = _orderItems[index];
 
-                      // Daftar Item Pesanan dalam Warung
-                      ListView.separated(
-                        shrinkWrap: true,
-                        physics: const NeverScrollableScrollPhysics(),
-                        itemCount: _orderItems.length,
-                        separatorBuilder: (context, index) => const Divider(
-                          color: _borderColor,
-                          height: 1,
-                          thickness: 1,
-                        ),
-                        itemBuilder: (context, index) {
-                          final item = _orderItems[index];
-
-                          return Padding(
-                            padding: const EdgeInsets.all(12),
-                            child: Row(
-                              children: [
-                                // Foto Makanan
-                                ClipRRect(
-                                  borderRadius: BorderRadius.circular(10),
-                                  child: SizedBox(
-                                    width: 52,
-                                    height: 52,
-                                    child: Image.network(
-                                      item.imageUrl,
-                                      fit: BoxFit.cover,
-                                      errorBuilder:
-                                          (context, error, stackTrace) =>
-                                              Container(
-                                        color: Colors.grey.shade200,
-                                        child: const Icon(
-                                          Icons.fastfood,
-                                          color: Colors.grey,
-                                          size: 24,
+                            return Padding(
+                              padding: const EdgeInsets.all(12),
+                              child: Row(
+                                children: [
+                                  // Foto Makanan
+                                  ClipRRect(
+                                    borderRadius: BorderRadius.circular(10),
+                                    child: SizedBox(
+                                      width: 52,
+                                      height: 52,
+                                      child: Image.network(
+                                        item.imageUrl,
+                                        fit: BoxFit.cover,
+                                        errorBuilder:
+                                            (context, error, stackTrace) =>
+                                                Container(
+                                          color: Colors.grey.shade200,
+                                          child: const Icon(
+                                            Icons.fastfood,
+                                            color: Colors.grey,
+                                            size: 24,
+                                          ),
                                         ),
                                       ),
                                     ),
                                   ),
-                                ),
 
-                                const SizedBox(width: 12),
+                                  const SizedBox(width: 12),
 
-                                // Nama & Porsi
-                                Expanded(
-                                  child: Column(
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.start,
+                                  // Nama & Porsi
+                                  Expanded(
+                                    child: Column(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                      children: [
+                                        Text(
+                                          item.name,
+                                          style: GoogleFonts.plusJakartaSans(
+                                            color: _textColorDark,
+                                            fontSize: 13,
+                                            fontWeight: FontWeight.bold,
+                                          ),
+                                        ),
+                                        const SizedBox(height: 2),
+                                        Text(
+                                          item.portion,
+                                          style: GoogleFonts.plusJakartaSans(
+                                            color: _textColorMuted,
+                                            fontSize: 11,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+
+                                  // Stepper Kuantitas: [-] [qty] [+] & Harga
+                                  Row(
+                                    mainAxisSize: MainAxisSize.min,
                                     children: [
+                                      InkWell(
+                                        onTap: () {
+                                          setState(() {
+                                            CartManager.instance
+                                                .updateQuantity(item.name, -1);
+                                          });
+                                        },
+                                        borderRadius: BorderRadius.circular(4),
+                                        child: Container(
+                                          width: 22,
+                                          height: 22,
+                                          decoration: BoxDecoration(
+                                            color: const Color(0xFFF3F4F6),
+                                            borderRadius:
+                                                BorderRadius.circular(4),
+                                            border: Border.all(
+                                                color: _borderColor),
+                                          ),
+                                          child: const Icon(
+                                            Icons.remove,
+                                            size: 13,
+                                            color: _textColorDark,
+                                          ),
+                                        ),
+                                      ),
+                                      Padding(
+                                        padding: const EdgeInsets.symmetric(
+                                            horizontal: 8),
+                                        child: Text(
+                                          '${item.quantity}',
+                                          style: GoogleFonts.plusJakartaSans(
+                                            color: _textColorDark,
+                                            fontSize: 12.5,
+                                            fontWeight: FontWeight.bold,
+                                          ),
+                                        ),
+                                      ),
+                                      InkWell(
+                                        onTap: () {
+                                          setState(() {
+                                            CartManager.instance
+                                                .updateQuantity(item.name, 1);
+                                          });
+                                        },
+                                        borderRadius: BorderRadius.circular(4),
+                                        child: Container(
+                                          width: 22,
+                                          height: 22,
+                                          decoration: BoxDecoration(
+                                            color: _primaryGreen,
+                                            borderRadius:
+                                                BorderRadius.circular(4),
+                                          ),
+                                          child: const Icon(
+                                            Icons.add,
+                                            size: 13,
+                                            color: Colors.white,
+                                          ),
+                                        ),
+                                      ),
+                                      const SizedBox(width: 10),
                                       Text(
-                                        item.name,
+                                        _formatCurrency(
+                                            item.price * item.quantity),
                                         style: GoogleFonts.plusJakartaSans(
                                           color: _textColorDark,
                                           fontSize: 13,
                                           fontWeight: FontWeight.bold,
                                         ),
                                       ),
-                                      const SizedBox(height: 2),
-                                      Text(
-                                        item.portion,
-                                        style: GoogleFonts.plusJakartaSans(
-                                          color: _textColorMuted,
-                                          fontSize: 11,
-                                        ),
-                                      ),
                                     ],
                                   ),
-                                ),
-
-                                // Kuantitas (x1) & Harga (Rp15.000)
-                                Row(
-                                  mainAxisSize: MainAxisSize.min,
-                                  children: [
-                                    Text(
-                                      'x${item.quantity}',
-                                      style: GoogleFonts.plusJakartaSans(
-                                        color: _textColorMuted,
-                                        fontSize: 12,
-                                      ),
-                                    ),
-                                    const SizedBox(width: 10),
-                                    Text(
-                                      _formatCurrency(
-                                          item.price * item.quantity),
-                                      style: GoogleFonts.plusJakartaSans(
-                                        color: _textColorDark,
-                                        fontSize: 13,
-                                        fontWeight: FontWeight.bold,
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ],
-                            ),
-                          );
-                        },
-                      ),
-                    ],
+                                ],
+                              ),
+                            );
+                          },
+                        ),
+                      ],
+                    ),
                   ),
-                ),
 
-                const SizedBox(height: 16),
+                  const SizedBox(height: 16),
+                ],
 
                 // ==========================================
                 // 5. KARTU PILIHAN PEMBAYARAN & TOTAL CEPAT
@@ -429,9 +560,17 @@ class _ShoppingCartPageState extends State<ShoppingCartPage> {
                     children: [
                       // Baris Pilihan Pembayaran
                       InkWell(
+                        // Navigasi ke Halaman Pilih Metode Pembayaran
                         onTap: () {
-                          // Dialog pilih metode pembayaran
-                          _showPaymentMethodBottomSheet(context);
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => PilihPembayaranPage(
+                                totalAmount: _totalPayment,
+                                initialMethod: _selectedPaymentMethod,
+                              ),
+                            ),
+                          );
                         },
                         child: Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -597,18 +736,33 @@ class _ShoppingCartPageState extends State<ShoppingCartPage> {
                         width: double.infinity,
                         height: 46,
                         child: ElevatedButton(
+                          // Navigasi ke Halaman Pilih Metode Pembayaran
                           onPressed: () {
+                            if (_orderItems.isEmpty) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(
+                                  content: Text(
+                                      'Keranjang belanja masih kosong, pilih menu kuliner terlebih dahulu.'),
+                                  backgroundColor: Color(0xFFD97706),
+                                  duration: Duration(seconds: 2),
+                                ),
+                              );
+                              return;
+                            }
                             Navigator.push(
                               context,
                               MaterialPageRoute(
-                                builder: (context) => ValidasiTransaksiPage(
-                                  totalPayment: _totalPayment,
+                                builder: (context) => PilihPembayaranPage(
+                                  totalAmount: _totalPayment,
+                                  initialMethod: _selectedPaymentMethod,
                                 ),
                               ),
                             );
                           },
                           style: ElevatedButton.styleFrom(
-                            backgroundColor: _accentOrange,
+                            backgroundColor: _orderItems.isEmpty
+                                ? const Color(0xFFD1D5DB)
+                                : _accentOrange,
                             elevation: 0,
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(10),
@@ -617,7 +771,9 @@ class _ShoppingCartPageState extends State<ShoppingCartPage> {
                           child: Text(
                             'Konfirmasi Pesanan',
                             style: GoogleFonts.plusJakartaSans(
-                              color: const Color(0xFF1E232A),
+                              color: _orderItems.isEmpty
+                                  ? const Color(0xFF6B7280)
+                                  : const Color(0xFF1E232A),
                               fontSize: 14,
                               fontWeight: FontWeight.bold,
                             ),
@@ -632,68 +788,72 @@ class _ShoppingCartPageState extends State<ShoppingCartPage> {
           ),
         ),
       ),
-    );
-  }
-
-
-  // Bottom Sheet untuk Memilih Metode Pembayaran
-  void _showPaymentMethodBottomSheet(BuildContext context) {
-    showModalBottomSheet(
-      context: context,
-      backgroundColor: Colors.white,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
-      ),
-      builder: (context) {
-        final methods = ['QRIS', 'Tunai / COD', 'Transfer Bank BCA', 'GoPay'];
-
-        return Padding(
-          padding: const EdgeInsets.symmetric(vertical: 16),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 18),
-                child: Text(
-                  'Pilih Metode Pembayaran',
-                  style: GoogleFonts.playfairDisplay(
-                    color: _textColorDark,
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-              ),
-              const SizedBox(height: 8),
-              ...methods.map((method) {
-                return ListTile(
-                  title: Text(
-                    method,
-                    style: GoogleFonts.plusJakartaSans(
-                      color: _textColorDark,
-                      fontSize: 13.5,
-                      fontWeight: _selectedPaymentMethod == method
-                          ? FontWeight.bold
-                          : FontWeight.normal,
-                    ),
-                  ),
-                  trailing: _selectedPaymentMethod == method
-                      ? const Icon(Icons.check, color: _primaryGreen)
-                      : null,
-                  onTap: () {
-                    setState(() {
-                      _selectedPaymentMethod = method;
-                    });
-                    Navigator.pop(context);
-                  },
-                );
-              }),
-            ],
+      // Bottom Navigation Bar untuk ShoppingCartPage
+      bottomNavigationBar: Container(
+        decoration: const BoxDecoration(
+          color: Colors.white,
+          border: Border(
+            top: BorderSide(color: _borderColor, width: 1),
           ),
-        );
-      },
+        ),
+        child: BottomNavigationBar(
+          currentIndex: 2, // Index 2: Keranjang Aktif
+          // Perpindahan antar tab BottomNavigationBar
+          onTap: (index) {
+            if (index == 2) return;
+
+            if (index == 0) {
+              Navigator.pushReplacement(
+                context,
+                MaterialPageRoute(builder: (context) => const HomePage()),
+              );
+            } else if (index == 1) {
+              Navigator.pushReplacement(
+                context,
+                MaterialPageRoute(builder: (context) => const WarungListPage()),
+              );
+            } else if (index == 3) {
+              Navigator.pushReplacement(
+                context,
+                MaterialPageRoute(builder: (context) => const AkunPage()),
+              );
+            }
+          },
+          backgroundColor: Colors.white,
+          type: BottomNavigationBarType.fixed,
+          selectedItemColor: _primaryGreen,
+          unselectedItemColor: const Color(0xFF9CA3AF),
+          selectedLabelStyle: GoogleFonts.plusJakartaSans(
+            fontSize: 11,
+            fontWeight: FontWeight.bold,
+          ),
+          unselectedLabelStyle: GoogleFonts.plusJakartaSans(
+            fontSize: 11,
+            fontWeight: FontWeight.w500,
+          ),
+          items: const [
+            BottomNavigationBarItem(
+              icon: Icon(Icons.home_filled),
+              label: 'Beranda',
+            ),
+            BottomNavigationBarItem(
+              icon: Icon(Icons.storefront_outlined),
+              label: 'Warung',
+            ),
+            BottomNavigationBarItem(
+              icon: Icon(Icons.shopping_basket),
+              label: 'Keranjang',
+            ),
+            BottomNavigationBarItem(
+              icon: Icon(Icons.person_outline),
+              label: 'Akun',
+            ),
+          ],
+        ),
+      ),
     );
   }
+
 
   // Helper Widget: Tombol Bulat di Atas
   Widget _buildTopCircleButton({

@@ -342,10 +342,28 @@ class _RegisterPageState extends State<RegisterPage> {
                                           .showSnackBar(
                                         const SnackBar(
                                           content:
-                                              Text('Pendaftaran diproses...'),
+                                              Text('Pendaftaran berhasil! Mengarahkan ke halaman masuk...'),
                                           duration: Duration(seconds: 1),
                                         ),
                                       );
+
+                                      // Navigasi kembali ke LoginPage setelah pendaftaran berhasil
+                                      final nav = Navigator.of(context);
+                                      Future.delayed(
+                                          const Duration(milliseconds: 600), () {
+                                        if (mounted) {
+                                          if (nav.canPop()) {
+                                            nav.pop();
+                                          } else {
+                                            nav.pushReplacement(
+                                              MaterialPageRoute(
+                                                builder: (context) =>
+                                                    const LoginPage(),
+                                              ),
+                                            );
+                                          }
+                                        }
+                                      });
                                     },
                                     style: ElevatedButton.styleFrom(
                                       backgroundColor: _primaryGreen,

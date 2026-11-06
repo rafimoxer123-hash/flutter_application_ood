@@ -2,6 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'detail_warung_page.dart';
 import 'warung_list_page.dart';
+import 'shopping_cart_page.dart';
+import 'notifikasi_page.dart';
+import 'akun_page.dart';
+import 'kategori_kuliner_page.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -166,19 +170,43 @@ class _HomePageState extends State<HomePage> {
                             _buildTopCircleButton(
                               icon: Icons.notifications_active_outlined,
                               iconColor: const Color(0xFFD97706),
-                              onTap: () {},
+                              // Navigasi ke Halaman Notifikasi
+                              onTap: () {
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (context) => const NotifikasiPage(),
+                                  ),
+                                );
+                              },
                             ),
                             const SizedBox(width: 8),
                             _buildTopCircleButton(
                               icon: Icons.shopping_basket_outlined,
                               iconColor: const Color(0xFF78716C),
-                              onTap: () {},
+                              // Navigasi ke Halaman Keranjang Belanja
+                              onTap: () {
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (context) => const ShoppingCartPage(),
+                                  ),
+                                );
+                              },
                             ),
                             const SizedBox(width: 8),
                             _buildTopCircleButton(
                               icon: Icons.person_outline_rounded,
                               iconColor: const Color(0xFF2563EB),
-                              onTap: () {},
+                              // Navigasi ke Halaman Akun / Profil
+                              onTap: () {
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (context) => const AkunPage(),
+                                  ),
+                                );
+                              },
                             ),
                           ],
                         ),
@@ -353,7 +381,15 @@ class _HomePageState extends State<HomePage> {
                       width: double.infinity,
                       height: 44,
                       child: ElevatedButton(
-                        onPressed: () {},
+                        // Navigasi ke Halaman Daftar Warung Kuliner
+                        onPressed: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => const WarungListPage(),
+                            ),
+                          );
+                        },
                         style: ElevatedButton.styleFrom(
                           backgroundColor: _accentOrange,
                           elevation: 0,
@@ -570,6 +606,17 @@ class _HomePageState extends State<HomePage> {
                             iconBgColor: const Color(0xFFFEF3C7),
                             title: 'Makanan Berat',
                             subtitle: '16 warung',
+                            // Navigasi ke Kategori Makanan Berat
+                            onTap: () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) => const KategoriKulinerPage(
+                                    initialCategory: 'Makanan Berat',
+                                  ),
+                                ),
+                              );
+                            },
                           ),
                         ),
                         const SizedBox(width: 12),
@@ -580,6 +627,17 @@ class _HomePageState extends State<HomePage> {
                             iconBgColor: const Color(0xFFFED7AA),
                             title: 'Sate & Bakar',
                             subtitle: '8 warung',
+                            // Navigasi ke Kategori Sate & Bakar
+                            onTap: () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) => const KategoriKulinerPage(
+                                    initialCategory: 'Sate & Bakar',
+                                  ),
+                                ),
+                              );
+                            },
                           ),
                         ),
                       ],
@@ -596,6 +654,17 @@ class _HomePageState extends State<HomePage> {
                             iconBgColor: const Color(0xFFDCFCE7),
                             title: 'Jajanan Manis',
                             subtitle: '16 warung',
+                            // Navigasi ke Kategori Jajanan Manis
+                            onTap: () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) => const KategoriKulinerPage(
+                                    initialCategory: 'Jajanan Manis',
+                                  ),
+                                ),
+                              );
+                            },
                           ),
                         ),
                         const SizedBox(width: 12),
@@ -606,6 +675,17 @@ class _HomePageState extends State<HomePage> {
                             iconBgColor: const Color(0xFFFFEDD5),
                             title: 'Kopi & Minuman',
                             subtitle: '7 warung',
+                            // Navigasi ke Kategori Kopi & Minuman
+                            onTap: () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) => const KategoriKulinerPage(
+                                    initialCategory: 'Kopi & Minuman',
+                                  ),
+                                ),
+                              );
+                            },
                           ),
                         ),
                       ],
@@ -840,10 +920,27 @@ class _HomePageState extends State<HomePage> {
               _currentNavIndex = index;
             });
             if (index == 1) {
+              // Navigasi ke Daftar Warung
               Navigator.push(
                 context,
                 MaterialPageRoute(
                   builder: (context) => const WarungListPage(),
+                ),
+              );
+            } else if (index == 2) {
+              // Navigasi ke Keranjang Belanja
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => const ShoppingCartPage(),
+                ),
+              );
+            } else if (index == 3) {
+              // Navigasi ke Halaman Akun / Profil
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => const AkunPage(),
                 ),
               );
             }
@@ -912,43 +1009,51 @@ class _HomePageState extends State<HomePage> {
     required Color iconBgColor,
     required String title,
     required String subtitle,
+    VoidCallback? onTap,
   }) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
-      decoration: BoxDecoration(
-        color: Colors.white,
+    return Material(
+      color: Colors.white,
+      borderRadius: BorderRadius.circular(12),
+      child: InkWell(
+        onTap: onTap,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: _borderColor),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Container(
-            padding: const EdgeInsets.all(7),
-            decoration: BoxDecoration(
-              color: iconBgColor,
-              borderRadius: BorderRadius.circular(8),
-            ),
-            child: Icon(icon, color: iconColor, size: 18),
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: _borderColor),
           ),
-          const SizedBox(height: 10),
-          Text(
-            title,
-            style: GoogleFonts.plusJakartaSans(
-              color: _textColorDark,
-              fontSize: 12.5,
-              fontWeight: FontWeight.bold,
-            ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Container(
+                padding: const EdgeInsets.all(7),
+                decoration: BoxDecoration(
+                  color: iconBgColor,
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Icon(icon, color: iconColor, size: 18),
+              ),
+              const SizedBox(height: 10),
+              Text(
+                title,
+                style: GoogleFonts.plusJakartaSans(
+                  color: _textColorDark,
+                  fontSize: 12.5,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              const SizedBox(height: 2),
+              Text(
+                subtitle,
+                style: GoogleFonts.plusJakartaSans(
+                  color: _textColorMuted,
+                  fontSize: 10.5,
+                ),
+              ),
+            ],
           ),
-          const SizedBox(height: 2),
-          Text(
-            subtitle,
-            style: GoogleFonts.plusJakartaSans(
-              color: _textColorMuted,
-              fontSize: 10.5,
-            ),
-          ),
-        ],
+        ),
       ),
     );
   }

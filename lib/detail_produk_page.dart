@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'shopping_cart_page.dart';
+import 'notifikasi_page.dart';
+import 'akun_page.dart';
+import 'cart_manager.dart';
 
 /// Model item produk kuliner untuk halaman Detail Produk
 class ProductMenuItem {
@@ -46,7 +49,7 @@ class _DetailProdukPageState extends State<DetailProdukPage> {
       price: 15000,
       imageUrl:
           'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&w=500&q=80',
-      quantity: 1, // Sesuai screenshot (jumlah: 1)
+      quantity: 0,
     ),
     ProductMenuItem(
       id: '2',
@@ -55,7 +58,7 @@ class _DetailProdukPageState extends State<DetailProdukPage> {
       price: 15000,
       imageUrl:
           'https://images.unsplash.com/photo-1562967914-608f82629710?auto=format&fit=crop&w=500&q=80',
-      quantity: 1, // Sesuai screenshot (jumlah: 1)
+      quantity: 0,
     ),
     ProductMenuItem(
       id: '3',
@@ -160,19 +163,43 @@ class _DetailProdukPageState extends State<DetailProdukPage> {
                               _buildTopCircleButton(
                                 icon: Icons.notifications_active_outlined,
                                 iconColor: const Color(0xFFD97706),
-                                onTap: () {},
+                                // Navigasi ke Halaman Notifikasi
+                                onTap: () {
+                                  Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (context) => const NotifikasiPage(),
+                                    ),
+                                  );
+                                },
                               ),
                               const SizedBox(width: 8),
                               _buildTopCircleButton(
                                 icon: Icons.shopping_basket_outlined,
                                 iconColor: const Color(0xFF78716C),
-                                onTap: () {},
+                                // Navigasi ke Halaman Keranjang
+                                onTap: () {
+                                  Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (context) => const ShoppingCartPage(),
+                                    ),
+                                  );
+                                },
                               ),
                               const SizedBox(width: 8),
                               _buildTopCircleButton(
                                 icon: Icons.person_outline_rounded,
                                 iconColor: const Color(0xFF2563EB),
-                                onTap: () {},
+                                // Navigasi ke Halaman Akun / Profil
+                                onTap: () {
+                                  Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (context) => const AkunPage(),
+                                    ),
+                                  );
+                                },
                               ),
                             ],
                           ),
@@ -574,6 +601,18 @@ class _DetailProdukPageState extends State<DetailProdukPage> {
             height: 42,
             child: ElevatedButton(
               onPressed: () {
+                // Menambahkan menu yang dipilih ke keranjang
+                for (final item in _products.where((p) => p.quantity > 0)) {
+                  CartManager.instance.addItem(
+                    name: item.name,
+                    price: item.price,
+                    portion: item.portion,
+                    imageUrl: item.imageUrl ??
+                        'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&w=400&q=80',
+                    warungName: 'Sego Liwet Bakar Kemangi',
+                    quantity: item.quantity,
+                  );
+                }
                 Navigator.push(
                   context,
                   MaterialPageRoute(

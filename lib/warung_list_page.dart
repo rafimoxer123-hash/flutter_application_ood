@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'detail_warung_page.dart';
-import 'detail_produk_page.dart';
+import 'shopping_cart_page.dart';
 import 'home_page.dart';
+import 'notifikasi_page.dart';
+import 'akun_page.dart';
 
 class WarungListPage extends StatefulWidget {
   const WarungListPage({super.key});
@@ -240,19 +242,43 @@ class _WarungListPageState extends State<WarungListPage> {
                       _buildTopCircleButton(
                         icon: Icons.notifications_active_outlined,
                         iconColor: const Color(0xFFD97706),
-                        onTap: () {},
+                        // Navigasi ke Halaman Notifikasi
+                        onTap: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => const NotifikasiPage(),
+                            ),
+                          );
+                        },
                       ),
                       const SizedBox(width: 8),
                       _buildTopCircleButton(
                         icon: Icons.shopping_basket_outlined,
                         iconColor: const Color(0xFF78716C),
-                        onTap: () {},
+                        // Navigasi ke Halaman Keranjang Belanja
+                        onTap: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => const ShoppingCartPage(),
+                            ),
+                          );
+                        },
                       ),
                       const SizedBox(width: 8),
                       _buildTopCircleButton(
                         icon: Icons.person_outline_rounded,
                         iconColor: const Color(0xFF2563EB),
-                        onTap: () {},
+                        // Navigasi ke Halaman Akun / Profil
+                        onTap: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => const AkunPage(),
+                            ),
+                          );
+                        },
                       ),
                     ],
                   ),
@@ -413,24 +439,15 @@ class _WarungListPageState extends State<WarungListPage> {
                             borderRadius: BorderRadius.circular(14),
                             child: InkWell(
                               onTap: () {
-                                if (warung.name.contains('Sego Liwet')) {
-                                  Navigator.push(
-                                    context,
-                                    MaterialPageRoute(
-                                      builder: (context) =>
-                                          const DetailProdukPage(),
+                                // Navigasi dinamis ke DetailWarungPage untuk semua warung
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (context) => DetailWarungPage(
+                                      warung: warung,
                                     ),
-                                  );
-                                } else {
-                                  Navigator.push(
-                                    context,
-                                    MaterialPageRoute(
-                                      builder: (context) => DetailWarungPage(
-                                        warung: warung,
-                                      ),
-                                    ),
-                                  );
-                                }
+                                  ),
+                                );
                               },
                               borderRadius: BorderRadius.circular(14),
                               child: Container(
@@ -589,6 +606,22 @@ class _WarungListPageState extends State<WarungListPage> {
                 context,
                 MaterialPageRoute(
                   builder: (context) => const HomePage(),
+                ),
+              );
+            } else if (index == 2) {
+              // Navigasi ke Keranjang (index 2)
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => const ShoppingCartPage(),
+                ),
+              );
+            } else if (index == 3) {
+              // Navigasi ke Halaman Akun / Profil (index 3)
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => const AkunPage(),
                 ),
               );
             }

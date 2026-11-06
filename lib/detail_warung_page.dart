@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'shopping_cart_page.dart';
+import 'detail_produk_page.dart';
+import 'cart_manager.dart';
 
 /// Model data untuk Menu Makanan/Minuman
 class WarungMenuItem {
@@ -391,14 +394,37 @@ class _DetailWarungPageState extends State<DetailWarungPage> {
                 separatorBuilder: (context, index) => const SizedBox(height: 12),
                 itemBuilder: (context, index) {
                   final menu = _warungData.menus[index];
-                  return Container(
-                    padding: const EdgeInsets.all(12),
-                    decoration: BoxDecoration(
-                      color: Colors.white,
+                  return Material(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(14),
+                    child: InkWell(
+                      // Respons klik kartu menu makanan
+                      onTap: () {
+                        if (_warungData.name.contains('Sego Liwet')) {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => const DetailProdukPage(),
+                            ),
+                          );
+                        } else {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: Text(
+                                  '${menu.name} · ${_formatCurrency(menu.price)}'),
+                              duration: const Duration(seconds: 1),
+                            ),
+                          );
+                        }
+                      },
                       borderRadius: BorderRadius.circular(14),
-                      border: Border.all(color: _borderColor),
-                    ),
-                    child: Row(
+                      child: Container(
+                        padding: const EdgeInsets.all(12),
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(14),
+                          border: Border.all(color: _borderColor),
+                        ),
+                        child: Row(
                       crossAxisAlignment: CrossAxisAlignment.center,
                       children: [
                         // Foto Menu
@@ -467,10 +493,30 @@ class _DetailWarungPageState extends State<DetailWarungPage> {
                         // Tombol Tambah ke Keranjang (+)
                         InkWell(
                           onTap: () {
+                            CartManager.instance.addItem(
+                              name: menu.name,
+                              price: menu.price,
+                              portion: '1 porsi',
+                              imageUrl: menu.imageUrl,
+                              warungName: _warungData.name,
+                              quantity: 1,
+                            );
                             ScaffoldMessenger.of(context).showSnackBar(
                               SnackBar(
                                 content: Text('${menu.name} ditambahkan ke keranjang'),
-                                duration: const Duration(seconds: 1),
+                                action: SnackBarAction(
+                                  label: 'Lihat',
+                                  textColor: const Color(0xFFDE8A36),
+                                  onPressed: () {
+                                    Navigator.push(
+                                      context,
+                                      MaterialPageRoute(
+                                        builder: (context) => const ShoppingCartPage(),
+                                      ),
+                                    );
+                                  },
+                                ),
+                                duration: const Duration(seconds: 2),
                               ),
                             );
                           },
@@ -491,8 +537,10 @@ class _DetailWarungPageState extends State<DetailWarungPage> {
                         ),
                       ],
                     ),
-                  );
-                },
+                  ),
+                ),
+              );
+            },
               ),
 
               const SizedBox(height: 30),
