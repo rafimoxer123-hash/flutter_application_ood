@@ -6,7 +6,9 @@ import 'shopping_cart_page.dart';
 import 'akun_page.dart';
 import 'notifikasi_page.dart';
 import 'detail_warung_page.dart';
-import 'cart_manager.dart';
+import '../viewmodels/cart_manager.dart';
+import 'address_modal.dart';
+import 'main_tab_controller.dart';
 
 class KategoriKulinerPage extends StatefulWidget {
   final String initialCategory;
@@ -371,12 +373,8 @@ class _KategoriKulinerPageState extends State<KategoriKulinerPage> {
                           iconColor: const Color(0xFF78716C),
                           // Navigasi ke Halaman Keranjang
                           onTap: () {
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (context) => const ShoppingCartPage(),
-                              ),
-                            );
+                            MainTabController.switchTab(2);
+                            Navigator.pop(context);
                           },
                         ),
                         const SizedBox(width: 8),
@@ -385,12 +383,8 @@ class _KategoriKulinerPageState extends State<KategoriKulinerPage> {
                           iconColor: const Color(0xFF2563EB),
                           // Navigasi ke Halaman Akun / Profil
                           onTap: () {
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (context) => const AkunPage(),
-                              ),
-                            );
+                            MainTabController.switchTab(3);
+                            Navigator.pop(context);
                           },
                         ),
                       ],
@@ -404,38 +398,42 @@ class _KategoriKulinerPageState extends State<KategoriKulinerPage> {
               // ==========================================
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 16),
-                child: Container(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(8),
-                    border: Border.all(color: _borderColor),
-                  ),
-                  child: Row(
-                    children: [
-                      const Icon(
-                        Icons.location_on_outlined,
-                        size: 14,
-                        color: Color(0xFFDC2626),
-                      ),
-                      const SizedBox(width: 6),
-                      Text(
-                        'Dikirim ke ',
-                        style: GoogleFonts.plusJakartaSans(
-                          color: _textColorMuted,
-                          fontSize: 11.5,
+                child: InkWell(
+                  onTap: () => showDeliveryAddressModal(context),
+                  borderRadius: BorderRadius.circular(8),
+                  child: Container(
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(8),
+                      border: Border.all(color: _borderColor),
+                    ),
+                    child: Row(
+                      children: [
+                        const Icon(
+                          Icons.location_on_outlined,
+                          size: 14,
+                          color: Color(0xFFDC2626),
                         ),
-                      ),
-                      Text(
-                        'Jl. Veteran, Malang ▾',
-                        style: GoogleFonts.plusJakartaSans(
-                          color: _textColorDark,
-                          fontSize: 11.5,
-                          fontWeight: FontWeight.bold,
+                        const SizedBox(width: 6),
+                        Text(
+                          'Dikirim ke ',
+                          style: GoogleFonts.plusJakartaSans(
+                            color: _textColorMuted,
+                            fontSize: 11.5,
+                          ),
                         ),
-                      ),
-                    ],
+                        Text(
+                          'Jl. Veteran, Malang ▾',
+                          style: GoogleFonts.plusJakartaSans(
+                            color: _textColorDark,
+                            fontSize: 11.5,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
                 ),
               ),
@@ -1135,28 +1133,8 @@ class _KategoriKulinerPageState extends State<KategoriKulinerPage> {
           currentIndex: _currentNavIndex,
           // Perpindahan antar tab di BottomNavigationBar
           onTap: (index) {
-            if (index == 0) {
-              Navigator.pushReplacement(
-                context,
-                MaterialPageRoute(builder: (context) => const HomePage()),
-              );
-            } else if (index == 1) {
-              Navigator.pushReplacement(
-                context,
-                MaterialPageRoute(builder: (context) => const WarungListPage()),
-              );
-            } else if (index == 2) {
-              Navigator.pushReplacement(
-                context,
-                MaterialPageRoute(
-                    builder: (context) => const ShoppingCartPage()),
-              );
-            } else if (index == 3) {
-              Navigator.pushReplacement(
-                context,
-                MaterialPageRoute(builder: (context) => const AkunPage()),
-              );
-            }
+            MainTabController.switchTab(index);
+            Navigator.pop(context);
           },
           backgroundColor: Colors.white,
           type: BottomNavigationBarType.fixed,

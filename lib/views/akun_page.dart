@@ -8,9 +8,13 @@ import 'notifikasi_page.dart';
 import 'detail_warung_page.dart';
 import 'validasi_transaksi_page.dart';
 import 'login_page.dart';
+import '../viewmodels/order_manager.dart';
+import 'address_modal.dart';
+import 'main_tab_controller.dart';
 
 class AkunPage extends StatefulWidget {
-  const AkunPage({super.key});
+  final bool isEmbedded;
+  const AkunPage({super.key, this.isEmbedded = false});
 
   @override
   State<AkunPage> createState() => _AkunPageState();
@@ -31,13 +35,20 @@ class _AkunPageState extends State<AkunPage> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: _bodyBackground,
-      body: SafeArea(
-        child: SingleChildScrollView(
-          physics: const ClampingScrollPhysics(),
-          padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
-          child: Column(
+    return AnimatedBuilder(
+      animation: OrderManager.instance,
+      builder: (context, _) {
+        final activeCount = OrderManager.instance.activeOrdersCount;
+        final historyCount = OrderManager.instance.historyCount;
+        final favCount = OrderManager.instance.favoriteCount;
+
+        return Scaffold(
+          backgroundColor: _bodyBackground,
+          body: SafeArea(
+            child: SingleChildScrollView(
+              physics: const ClampingScrollPhysics(),
+              padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
+              child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               // ==========================================
@@ -94,19 +105,14 @@ class _AkunPageState extends State<AkunPage> {
                         },
                       ),
                       const SizedBox(width: 8),
-                      _buildTopCircleButton(
-                        icon: Icons.shopping_basket_outlined,
-                        iconColor: const Color(0xFF78716C),
-                        // Navigasi ke Halaman Keranjang
-                        onTap: () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (context) => const ShoppingCartPage(),
-                            ),
-                          );
-                        },
-                      ),
+                        _buildTopCircleButton(
+                          icon: Icons.shopping_basket_outlined,
+                          iconColor: const Color(0xFF78716C),
+                          // Berpindah ke Halaman Keranjang
+                          onTap: () {
+                            MainTabController.switchTab(2);
+                          },
+                        ),
                       const SizedBox(width: 8),
                       // Ikon Profil yang sedang aktif
                       Container(
@@ -226,21 +232,21 @@ class _AkunPageState extends State<AkunPage> {
                         Expanded(
                           child: _buildStatBadge(
                             title: 'Pesanan aktif',
-                            value: '2',
+                            value: '$activeCount',
                           ),
                         ),
                         const SizedBox(width: 10),
                         Expanded(
                           child: _buildStatBadge(
                             title: 'Riwayat',
-                            value: '18',
+                            value: '$historyCount',
                           ),
                         ),
                         const SizedBox(width: 10),
                         Expanded(
                           child: _buildStatBadge(
                             title: 'Favorit',
-                            value: '6',
+                            value: '$favCount',
                           ),
                         ),
                       ],
@@ -291,7 +297,7 @@ class _AkunPageState extends State<AkunPage> {
                             ),
                             const SizedBox(height: 2),
                             Text(
-                              '2 pesanan sedang diproses',
+                              '$activeCount pesanan sedang diproses',
                               style: GoogleFonts.plusJakartaSans(
                                 color: _textColorMuted,
                                 fontSize: 11.5,
@@ -300,15 +306,19 @@ class _AkunPageState extends State<AkunPage> {
                           ],
                         ),
                         InkWell(
-                          // Lihat pesanan aktif menuju ValidasiTransaksiPage
+                          // Lihat detail pesanan aktif
                           onTap: () {
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (context) =>
-                                    const ValidasiTransaksiPage(),
-                              ),
-                            );
+                            if (OrderManager.instance.activeOrders.isNotEmpty) {
+                              _showActiveOrdersSheet(context);
+                            } else {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(
+                                  content: Text('Tidak ada pesanan yang sedang diproses.'),
+                                  backgroundColor: _primaryGreen,
+                                  duration: Duration(seconds: 1),
+                                ),
+                              );
+                            }
                           },
                           borderRadius: BorderRadius.circular(20),
                           child: Container(
@@ -466,15 +476,9 @@ class _AkunPageState extends State<AkunPage> {
 
                         // Tombol Ubah Alamat
                         InkWell(
-                          // Aksi ubah alamat
+                          // Aksi ubah alamat via modal bottom sheet
                           onTap: () {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(
-                                content: Text('Fitur ubah alamat pengiriman...'),
-                                backgroundColor: _primaryGreen,
-                                duration: Duration(seconds: 1),
-                              ),
-                            );
+                            showDeliveryAddressModal(context);
                           },
                           borderRadius: BorderRadius.circular(20),
                           child: Container(
@@ -827,69 +831,191 @@ class _AkunPageState extends State<AkunPage> {
       // ==========================================
       // 8. BOTTOM NAVIGATION BAR
       // ==========================================
-      bottomNavigationBar: Container(
-        decoration: const BoxDecoration(
-          color: Colors.white,
-          border: Border(
-            top: BorderSide(color: _borderColor, width: 1),
-          ),
-        ),
-        child: BottomNavigationBar(
-          currentIndex: _currentNavIndex,
-          // Perpindahan antar tab di BottomNavigationBar
-          onTap: (index) {
-            if (index == _currentNavIndex) return;
+      bottomNavigationBar: widget.isEmbedded
+          ? null
+          : Container(
+              decoration: const BoxDecoration(
+                color: Colors.white,
+                border: Border(
+                  top: BorderSide(color: _borderColor, width: 1),
+                ),
+              ),
+              child: BottomNavigationBar(
+                currentIndex: _currentNavIndex,
+                onTap: (index) {
+                  MainTabController.switchTab(index);
+                },
+                backgroundColor: Colors.white,
+                type: BottomNavigationBarType.fixed,
+                selectedItemColor: _primaryGreen,
+                unselectedItemColor: const Color(0xFF9CA3AF),
+                selectedLabelStyle: GoogleFonts.plusJakartaSans(
+                  fontSize: 11,
+                  fontWeight: FontWeight.bold,
+                ),
+                unselectedLabelStyle: GoogleFonts.plusJakartaSans(
+                  fontSize: 11,
+                  fontWeight: FontWeight.w500,
+                ),
+                items: const [
+                  BottomNavigationBarItem(
+                    icon: Icon(Icons.home_filled),
+                    label: 'Beranda',
+                  ),
+                  BottomNavigationBarItem(
+                    icon: Icon(Icons.storefront_outlined),
+                    label: 'Warung',
+                  ),
+                  BottomNavigationBarItem(
+                    icon: Icon(Icons.shopping_basket_outlined),
+                    label: 'Keranjang',
+                  ),
+                  BottomNavigationBarItem(
+                    icon: Icon(Icons.person),
+                    label: 'Akun',
+                  ),
+                ],
+              ),
+            ),
+    );
+      },
+    );
+  }
 
-            if (index == 0) {
-              Navigator.pushReplacement(
-                context,
-                MaterialPageRoute(builder: (context) => const HomePage()),
-              );
-            } else if (index == 1) {
-              Navigator.pushReplacement(
-                context,
-                MaterialPageRoute(builder: (context) => const WarungListPage()),
-              );
-            } else if (index == 2) {
-              Navigator.pushReplacement(
-                context,
-                MaterialPageRoute(
-                    builder: (context) => const ShoppingCartPage()),
-              );
-            }
-          },
-          backgroundColor: Colors.white,
-          type: BottomNavigationBarType.fixed,
-          selectedItemColor: _primaryGreen,
-          unselectedItemColor: const Color(0xFF9CA3AF),
-          selectedLabelStyle: GoogleFonts.plusJakartaSans(
-            fontSize: 11,
-            fontWeight: FontWeight.bold,
-          ),
-          unselectedLabelStyle: GoogleFonts.plusJakartaSans(
-            fontSize: 11,
-            fontWeight: FontWeight.w500,
-          ),
-          items: const [
-            BottomNavigationBarItem(
-              icon: Icon(Icons.home_filled),
-              label: 'Beranda',
-            ),
-            BottomNavigationBarItem(
-              icon: Icon(Icons.storefront_outlined),
-              label: 'Warung',
-            ),
-            BottomNavigationBarItem(
-              icon: Icon(Icons.shopping_basket_outlined),
-              label: 'Keranjang',
-            ),
-            BottomNavigationBarItem(
-              icon: Icon(Icons.person),
-              label: 'Akun',
-            ),
-          ],
-        ),
+  // Modal Bottom Sheet untuk melihat daftar pesanan aktif
+  void _showActiveOrdersSheet(BuildContext context) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.white,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
+      builder: (ctx) {
+        final orders = OrderManager.instance.activeOrders;
+        return SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(20, 16, 20, 24),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Center(
+                  child: Container(
+                    width: 40,
+                    height: 4,
+                    decoration: BoxDecoration(
+                      color: Colors.grey.shade300,
+                      borderRadius: BorderRadius.circular(2),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 16),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                      'Daftar Pesanan Aktif',
+                      style: GoogleFonts.playfairDisplay(
+                        color: _textColorDark,
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    IconButton(
+                      onPressed: () => Navigator.pop(ctx),
+                      icon: const Icon(Icons.close, color: _textColorMuted, size: 20),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 12),
+                ...orders.map((o) {
+                  return Container(
+                    margin: const EdgeInsets.only(bottom: 12),
+                    padding: const EdgeInsets.all(14),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFF9F8F3),
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(color: _borderColor),
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Text(
+                              o.orderId,
+                              style: GoogleFonts.plusJakartaSans(
+                                color: _primaryGreen,
+                                fontSize: 13,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                            Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                              decoration: BoxDecoration(
+                                color: const Color(0xFFDCFCE7),
+                                borderRadius: BorderRadius.circular(6),
+                              ),
+                              child: Text(
+                                o.status,
+                                style: GoogleFonts.plusJakartaSans(
+                                  color: const Color(0xFF15803D),
+                                  fontSize: 10.5,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 6),
+                        Text(
+                          o.warungName,
+                          style: GoogleFonts.plusJakartaSans(
+                            color: _textColorDark,
+                            fontSize: 13,
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
+                        Text(
+                          o.itemsSummary,
+                          style: GoogleFonts.plusJakartaSans(
+                            color: _textColorMuted,
+                            fontSize: 11.5,
+                          ),
+                        ),
+                        const SizedBox(height: 6),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Text(
+                              'Estimasi: ${o.estimatedTime}',
+                              style: GoogleFonts.plusJakartaSans(
+                                color: _accentOrange,
+                                fontSize: 12,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                            Text(
+                              'Rp${o.totalPayment.toString().replaceAllMapped(RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'), (Match m) => '${m[1]}.')}',
+                              style: GoogleFonts.plusJakartaSans(
+                                color: _textColorDark,
+                                fontSize: 13,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                  );
+                }),
+              ],
+            ),
+          ),
+        );
+      },
     );
   }
 

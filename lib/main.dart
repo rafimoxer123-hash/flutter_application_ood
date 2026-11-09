@@ -1,18 +1,18 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'login_page.dart';
-import 'register_page.dart';
-import 'home_page.dart';
-import 'warung_list_page.dart';
-import 'detail_warung_page.dart';
-import 'detail_produk_page.dart';
-import 'shopping_cart_page.dart';
-import 'pilih_pembayaran_page.dart';
-import 'validasi_transaksi_page.dart';
-import 'notifikasi_page.dart';
-import 'pusat_bantuan_page.dart';
-import 'akun_page.dart';
-import 'kategori_kuliner_page.dart';
+import 'views/login_page.dart';
+import 'views/register_page.dart';
+import 'views/home_page.dart';
+import 'views/warung_list_page.dart';
+import 'views/detail_warung_page.dart';
+import 'views/detail_produk_page.dart';
+import 'views/shopping_cart_page.dart';
+import 'views/pilih_pembayaran_page.dart';
+import 'views/validasi_transaksi_page.dart';
+import 'views/notifikasi_page.dart';
+import 'views/pusat_bantuan_page.dart';
+import 'views/akun_page.dart';
+import 'views/kategori_kuliner_page.dart';
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
@@ -48,16 +48,16 @@ class MyApp extends StatelessWidget {
       routes: {
         '/login': (context) => const LoginPage(),
         '/register': (context) => const RegisterPage(),
-        '/home': (context) => const HomePage(),
-        '/warung': (context) => const WarungListPage(),
+        '/home': (context) => const HomePage(initialIndex: 0),
+        '/warung': (context) => const HomePage(initialIndex: 1),
+        '/cart': (context) => const HomePage(initialIndex: 2),
+        '/akun': (context) => const HomePage(initialIndex: 3),
         '/detail-warung': (context) => const DetailWarungPage(),
         '/detail-produk': (context) => const DetailProdukPage(),
-        '/cart': (context) => const ShoppingCartPage(),
         '/pilih-pembayaran': (context) => const PilihPembayaranPage(),
         '/validasi-transaksi': (context) => const ValidasiTransaksiPage(),
         '/notifikasi': (context) => const NotifikasiPage(),
         '/pusat-bantuan': (context) => const PusatBantuanPage(),
-        '/akun': (context) => const AkunPage(),
         '/kategori-kuliner': (context) => const KategoriKulinerPage(),
       },
     );

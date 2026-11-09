@@ -5,10 +5,13 @@ import 'home_page.dart';
 import 'warung_list_page.dart';
 import 'notifikasi_page.dart';
 import 'akun_page.dart';
-import 'cart_manager.dart';
+import '../viewmodels/cart_manager.dart';
+import 'main_tab_controller.dart';
+import 'address_modal.dart';
 
 class ShoppingCartPage extends StatefulWidget {
-  const ShoppingCartPage({super.key});
+  final bool isEmbedded;
+  const ShoppingCartPage({super.key, this.isEmbedded = false});
 
   @override
   State<ShoppingCartPage> createState() => _ShoppingCartPageState();
@@ -50,10 +53,13 @@ class _ShoppingCartPageState extends State<ShoppingCartPage> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: _bodyBackground,
-      body: SafeArea(
-        child: SingleChildScrollView(
+    return AnimatedBuilder(
+      animation: CartManager.instance,
+      builder: (context, _) {
+        return Scaffold(
+          backgroundColor: _bodyBackground,
+          body: SafeArea(
+            child: SingleChildScrollView(
           physics: const ClampingScrollPhysics(),
           child: Padding(
             padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
@@ -133,12 +139,7 @@ class _ShoppingCartPageState extends State<ShoppingCartPage> {
                           iconColor: const Color(0xFF2563EB),
                           // Navigasi ke Halaman Akun / Profil
                           onTap: () {
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (context) => const AkunPage(),
-                              ),
-                            );
+                            MainTabController.switchTab(3);
                           },
                         ),
                       ],
@@ -252,12 +253,7 @@ class _ShoppingCartPageState extends State<ShoppingCartPage> {
                         const SizedBox(height: 20),
                         ElevatedButton.icon(
                           onPressed: () {
-                            Navigator.pushReplacement(
-                              context,
-                              MaterialPageRoute(
-                                builder: (context) => const WarungListPage(),
-                              ),
-                            );
+                            MainTabController.switchTab(1);
                           },
                           icon: const Icon(
                             Icons.storefront_rounded,
@@ -339,15 +335,89 @@ class _ShoppingCartPageState extends State<ShoppingCartPage> {
                   const SizedBox(height: 16),
 
                   // ==========================================
-                  // 4. DAFTAR PESANAN PER WARUNG
+                  // 4. DAFTAR PESANAN PER WARUNG / STATUS KOSONG
                   // ==========================================
-                  Container(
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(14),
-                      border: Border.all(color: _borderColor),
+                  if (_orderItems.isEmpty) ...[
+                    Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.symmetric(
+                          vertical: 36, horizontal: 20),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(16),
+                        border: Border.all(color: _borderColor),
+                      ),
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Container(
+                            width: 64,
+                            height: 64,
+                            decoration: const BoxDecoration(
+                              color: Color(0xFFF3F4F6),
+                              shape: BoxShape.circle,
+                            ),
+                            child: const Icon(
+                              Icons.shopping_basket_outlined,
+                              size: 32,
+                              color: Color(0xFF9CA3AF),
+                            ),
+                          ),
+                          const SizedBox(height: 14),
+                          Text(
+                            'Keranjang Belanja Kosong',
+                            style: GoogleFonts.playfairDisplay(
+                              color: _textColorDark,
+                              fontSize: 17,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                          const SizedBox(height: 6),
+                          Text(
+                            'Yuk pilih aneka menu kuliner legendaris khas Pasar Oro-Oro Dowo!',
+                            textAlign: TextAlign.center,
+                            style: GoogleFonts.plusJakartaSans(
+                              color: _textColorMuted,
+                              fontSize: 12,
+                            ),
+                          ),
+                          const SizedBox(height: 18),
+                          ElevatedButton.icon(
+                            onPressed: () {
+                              MainTabController.switchTab(1);
+                            },
+                            icon: const Icon(Icons.storefront_rounded,
+                                size: 16, color: Colors.white),
+                            label: Text(
+                              'Jelajahi Menu Warung',
+                              style: GoogleFonts.plusJakartaSans(
+                                color: Colors.white,
+                                fontWeight: FontWeight.bold,
+                                fontSize: 12.5,
+                              ),
+                            ),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: _primaryGreen,
+                              elevation: 0,
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 18, vertical: 10),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(10),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
-                    child: Column(
+                    const SizedBox(height: 16),
+                  ] else ...[
+                    Container(
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(14),
+                        border: Border.all(color: _borderColor),
+                      ),
+                      child: Column(
                       children: [
                         // Header Warung & Subtotal
                         Container(
@@ -789,68 +859,54 @@ class _ShoppingCartPageState extends State<ShoppingCartPage> {
         ),
       ),
       // Bottom Navigation Bar untuk ShoppingCartPage
-      bottomNavigationBar: Container(
-        decoration: const BoxDecoration(
-          color: Colors.white,
-          border: Border(
-            top: BorderSide(color: _borderColor, width: 1),
-          ),
-        ),
-        child: BottomNavigationBar(
-          currentIndex: 2, // Index 2: Keranjang Aktif
-          // Perpindahan antar tab BottomNavigationBar
-          onTap: (index) {
-            if (index == 2) return;
-
-            if (index == 0) {
-              Navigator.pushReplacement(
-                context,
-                MaterialPageRoute(builder: (context) => const HomePage()),
-              );
-            } else if (index == 1) {
-              Navigator.pushReplacement(
-                context,
-                MaterialPageRoute(builder: (context) => const WarungListPage()),
-              );
-            } else if (index == 3) {
-              Navigator.pushReplacement(
-                context,
-                MaterialPageRoute(builder: (context) => const AkunPage()),
-              );
-            }
-          },
-          backgroundColor: Colors.white,
-          type: BottomNavigationBarType.fixed,
-          selectedItemColor: _primaryGreen,
-          unselectedItemColor: const Color(0xFF9CA3AF),
-          selectedLabelStyle: GoogleFonts.plusJakartaSans(
-            fontSize: 11,
-            fontWeight: FontWeight.bold,
-          ),
-          unselectedLabelStyle: GoogleFonts.plusJakartaSans(
-            fontSize: 11,
-            fontWeight: FontWeight.w500,
-          ),
-          items: const [
-            BottomNavigationBarItem(
-              icon: Icon(Icons.home_filled),
-              label: 'Beranda',
+      bottomNavigationBar: widget.isEmbedded
+          ? null
+          : Container(
+              decoration: const BoxDecoration(
+                color: Colors.white,
+                border: Border(
+                  top: BorderSide(color: _borderColor, width: 1),
+                ),
+              ),
+              child: BottomNavigationBar(
+                currentIndex: 2, // Index 2: Keranjang Aktif
+                onTap: (index) {
+                  MainTabController.switchTab(index);
+                },
+                backgroundColor: Colors.white,
+                type: BottomNavigationBarType.fixed,
+                selectedItemColor: _primaryGreen,
+                unselectedItemColor: const Color(0xFF9CA3AF),
+                selectedLabelStyle: GoogleFonts.plusJakartaSans(
+                  fontSize: 11,
+                  fontWeight: FontWeight.bold,
+                ),
+                unselectedLabelStyle: GoogleFonts.plusJakartaSans(
+                  fontSize: 11,
+                  fontWeight: FontWeight.w500,
+                ),
+                items: const [
+                  BottomNavigationBarItem(
+                    icon: Icon(Icons.home_filled),
+                    label: 'Beranda',
+                  ),
+                  BottomNavigationBarItem(
+                    icon: Icon(Icons.storefront_outlined),
+                    label: 'Warung',
+                  ),
+                  BottomNavigationBarItem(
+                    icon: Icon(Icons.shopping_basket),
+                    label: 'Keranjang',
+                  ),
+                  BottomNavigationBarItem(
+                    icon: Icon(Icons.person_outline),
+                    label: 'Akun',
+                  ),
+                ],
+              ),
             ),
-            BottomNavigationBarItem(
-              icon: Icon(Icons.storefront_outlined),
-              label: 'Warung',
-            ),
-            BottomNavigationBarItem(
-              icon: Icon(Icons.shopping_basket),
-              label: 'Keranjang',
-            ),
-            BottomNavigationBarItem(
-              icon: Icon(Icons.person_outline),
-              label: 'Akun',
-            ),
-          ],
-        ),
-      ),
+    );
+      },
     );
   }
 

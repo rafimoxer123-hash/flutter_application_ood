@@ -3,7 +3,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'shopping_cart_page.dart';
 import 'notifikasi_page.dart';
 import 'akun_page.dart';
-import 'cart_manager.dart';
+import '../viewmodels/cart_manager.dart';
 
 /// Model item produk kuliner untuk halaman Detail Produk
 class ProductMenuItem {
@@ -79,21 +79,11 @@ class _DetailProdukPageState extends State<DetailProdukPage> {
     ),
   ];
 
-  // Menghitung total harga keranjang secara dinamis
-  int get _totalPrice {
-    return _products.fold(
-      0,
-      (sum, item) => sum + (item.price * item.quantity),
-    );
-  }
+  // Menghitung total harga keranjang secara dinamis dari CartManager
+  int get _totalPrice => CartManager.instance.subtotal;
 
-  // Menghitung total porsi makanan yang dipilih
-  int get _totalItems {
-    return _products.fold(
-      0,
-      (sum, item) => sum + item.quantity,
-    );
-  }
+  // Menghitung total porsi makanan yang dipilih dari CartManager
+  int get _totalItems => CartManager.instance.totalItems;
 
   // Format mata uang Rupiah tanpa spasi (Rp15.000)
   String _formatCurrency(int amount) {
@@ -106,15 +96,18 @@ class _DetailProdukPageState extends State<DetailProdukPage> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: _bodyBackground,
-      body: SafeArea(
-        child: Column(
-          children: [
-            // Konten halaman yang dapat digulirkan (scrollable)
-            Expanded(
-              child: SingleChildScrollView(
-                physics: const ClampingScrollPhysics(),
+    return AnimatedBuilder(
+      animation: CartManager.instance,
+      builder: (context, _) {
+        return Scaffold(
+          backgroundColor: _bodyBackground,
+          body: SafeArea(
+            child: Column(
+              children: [
+                // Konten halaman yang dapat digulirkan (scrollable)
+                Expanded(
+                  child: SingleChildScrollView(
+                    physics: const ClampingScrollPhysics(),
                 child: Padding(
                   padding: const EdgeInsets.fromLTRB(16, 12, 16, 20),
                   child: Column(
@@ -389,10 +382,14 @@ class _DetailProdukPageState extends State<DetailProdukPage> {
         ),
       ),
     );
+      },
+    );
   }
 
   // Widget Kartu Produk dalam Grid
   Widget _buildProductCard(ProductMenuItem product) {
+    final currentQty = CartManager.instance.getItemQuantity(product.name);
+
     return Container(
       decoration: BoxDecoration(
         color: Colors.white,
@@ -483,10 +480,8 @@ class _DetailProdukPageState extends State<DetailProdukPage> {
                             color: Colors.transparent,
                             child: InkWell(
                               onTap: () {
-                                if (product.quantity > 0) {
-                                  setState(() {
-                                    product.quantity--;
-                                  });
+                                if (currentQty > 0) {
+                                  CartManager.instance.updateQuantity(product.name, -1);
                                 }
                               },
                               borderRadius: BorderRadius.circular(6),
@@ -512,7 +507,7 @@ class _DetailProdukPageState extends State<DetailProdukPage> {
                           SizedBox(
                             width: 14,
                             child: Text(
-                              product.quantity.toString(),
+                              currentQty.toString(),
                               textAlign: TextAlign.center,
                               style: GoogleFonts.plusJakartaSans(
                                 color: _textColorDark,
@@ -529,9 +524,15 @@ class _DetailProdukPageState extends State<DetailProdukPage> {
                             color: Colors.transparent,
                             child: InkWell(
                               onTap: () {
-                                setState(() {
-                                  product.quantity++;
-                                });
+                                CartManager.instance.addItem(
+                                  name: product.name,
+                                  price: product.price,
+                                  portion: product.portion,
+                                  imageUrl: product.imageUrl ??
+                                      'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&w=400&q=80',
+                                  warungName: 'Sego Liwet Bakar Kemangi',
+                                  quantity: 1,
+                                );
                               },
                               borderRadius: BorderRadius.circular(6),
                               child: Container(
@@ -601,18 +602,6 @@ class _DetailProdukPageState extends State<DetailProdukPage> {
             height: 42,
             child: ElevatedButton(
               onPressed: () {
-                // Menambahkan menu yang dipilih ke keranjang
-                for (final item in _products.where((p) => p.quantity > 0)) {
-                  CartManager.instance.addItem(
-                    name: item.name,
-                    price: item.price,
-                    portion: item.portion,
-                    imageUrl: item.imageUrl ??
-                        'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&w=400&q=80',
-                    warungName: 'Sego Liwet Bakar Kemangi',
-                    quantity: item.quantity,
-                  );
-                }
                 Navigator.push(
                   context,
                   MaterialPageRoute(

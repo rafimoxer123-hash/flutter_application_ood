@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'shopping_cart_page.dart';
 import 'detail_produk_page.dart';
-import 'cart_manager.dart';
+import '../viewmodels/cart_manager.dart';
 
 /// Model data untuk Menu Makanan/Minuman
 class WarungMenuItem {
@@ -547,6 +547,67 @@ class _DetailWarungPageState extends State<DetailWarungPage> {
             ],
           ),
         ),
+      ),
+      bottomNavigationBar: AnimatedBuilder(
+        animation: CartManager.instance,
+        builder: (context, _) {
+          if (CartManager.instance.isEmpty) return const SizedBox.shrink();
+          return Container(
+            color: _primaryGreen,
+            padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 12),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Total keranjang',
+                      style: GoogleFonts.plusJakartaSans(
+                        color: const Color(0xFFBACBC2),
+                        fontSize: 11,
+                      ),
+                    ),
+                    Text(
+                      _formatCurrency(CartManager.instance.subtotal),
+                      style: GoogleFonts.plusJakartaSans(
+                        color: Colors.white,
+                        fontSize: 15,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ],
+                ),
+                ElevatedButton(
+                  onPressed: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => const ShoppingCartPage(),
+                      ),
+                    );
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFFDE8A36),
+                    elevation: 0,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                  ),
+                  child: Text(
+                    'Keranjang (${CartManager.instance.totalItems})',
+                    style: GoogleFonts.plusJakartaSans(
+                      color: const Color(0xFF1E232A),
+                      fontSize: 13,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          );
+        },
       ),
     );
   }

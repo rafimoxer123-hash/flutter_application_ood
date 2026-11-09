@@ -1,3 +1,5 @@
+import 'package:flutter/foundation.dart';
+
 class CartItem {
   final String id;
   final String name;
@@ -18,14 +20,15 @@ class CartItem {
   });
 }
 
-class CartManager {
+/// State Management Keranjang berbasis ChangeNotifier (Singleton)
+class CartManager extends ChangeNotifier {
   static final CartManager instance = CartManager._internal();
   CartManager._internal();
 
-  // Daftar item di keranjang (awalnya kosong)
+  // Daftar item di keranjang (awalnya kosong sebelum pengguna memesan)
   final List<CartItem> _items = [];
 
-  List<CartItem> get items => _items;
+  List<CartItem> get items => List.unmodifiable(_items);
 
   bool get isEmpty => _items.isEmpty;
 
@@ -34,7 +37,19 @@ class CartManager {
   int get subtotal =>
       _items.fold(0, (sum, item) => sum + (item.price * item.quantity));
 
-  // Menambahkan item ke keranjang
+  // Ongkos kirim tetap jika ada pesanan (Rp8.000), Rp0 jika keranjang kosong
+  int get deliveryFee => _items.isEmpty ? 0 : 8000;
+
+  // Total bayar keseluruhan
+  int get totalPayment => _items.isEmpty ? 0 : subtotal + deliveryFee;
+
+  // Cek jumlah porsi dari menu tertentu
+  int getItemQuantity(String name) {
+    final index = _items.indexWhere((item) => item.name == name);
+    return index >= 0 ? _items[index].quantity : 0;
+  }
+
+  // Menambahkan item ke keranjang atau memperbarui jika sudah ada
   void addItem({
     required String name,
     required int price,
@@ -60,6 +75,8 @@ class CartManager {
         ),
       );
     }
+    // TODO: [API Connection] Sinkronisasi data keranjang ke endpoint backend (POST /api/v1/cart/items)
+    notifyListeners();
   }
 
   // Mengubah kuantitas item (+1 atau -1)
@@ -70,17 +87,22 @@ class CartManager {
       if (_items[index].quantity <= 0) {
         _items.removeAt(index);
       }
+      // TODO: [API Connection] Update item quantity ke backend (PATCH /api/v1/cart/items/{id})
+      notifyListeners();
     }
   }
 
   // Menghapus item dari keranjang
   void removeItem(String name) {
     _items.removeWhere((item) => item.name == name);
+    // TODO: [API Connection] Hapus item keranjang di backend (DELETE /api/v1/cart/items/{id})
+    notifyListeners();
   }
 
   // Mengosongkan keranjang setelah transaksi selesai
   void clearCart() {
     _items.clear();
+    // TODO: [API Connection] Bersihkan keranjang di backend (POST /api/v1/cart/clear)
+    notifyListeners();
   }
 }
-

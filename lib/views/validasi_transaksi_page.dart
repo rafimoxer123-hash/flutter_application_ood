@@ -4,7 +4,9 @@ import 'home_page.dart';
 import 'shopping_cart_page.dart';
 import 'notifikasi_page.dart';
 import 'akun_page.dart';
-import 'cart_manager.dart';
+import '../viewmodels/cart_manager.dart';
+import '../viewmodels/order_manager.dart';
+import 'main_tab_controller.dart';
 
 class ValidasiTransaksiPage extends StatefulWidget {
   final String? orderNumber;
@@ -274,13 +276,27 @@ class _ValidasiTransaksiPageState extends State<ValidasiTransaksiPage> {
                     // (seperti DetailProdukPage dan ShoppingCartPage).
                     // -----------------------------------------------------------------
                     onPressed: () {
-                      // Kosongkan keranjang belanja setelah pesanan tervalidasi
+                      // 1. Tambahkan pesanan aktif ke OrderManager
+                      OrderManager.instance.addOrder(
+                        orderId: _orderNumber,
+                        warungName: 'Sego Liwet Bakar Kemangi',
+                        itemsSummary: '2 menu · Sego Liwet Bakar',
+                        totalPayment: _totalPayment,
+                        estimatedTime: _estimatedTime,
+                        deliveryAddress: _deliveryAddress,
+                      );
+
+                      // 2. Kosongkan keranjang belanja setelah pesanan tervalidasi
                       CartManager.instance.clearCart();
 
+                      // 3. Reset tab ke Beranda (Index 0)
+                      MainTabController.switchTab(0);
+
+                      // 4. Kembali ke HomePage dan bersihkan stack navigasi
                       Navigator.pushAndRemoveUntil(
                         context,
                         MaterialPageRoute(
-                          builder: (context) => const HomePage(),
+                          builder: (context) => const HomePage(initialIndex: 0),
                         ),
                         (route) => false, // Hapus semua rute sebelumnya
                       );
